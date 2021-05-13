@@ -5,8 +5,8 @@ define ufw::allow (
   Enum['tcp', 'udp'] $proto = 'tcp',
   String $interface = '',
   String $from = '',
+  String $destip = '',
   Enum['present', 'absent'] $ensure = 'present'
-
 ) {
 
   if !defined(Class['ufw']) {
@@ -36,7 +36,12 @@ define ufw::allow (
     default => inline_template('<%= Regexp.quote(@from) %>')
   }
 
-  $_rule   = "allow in${_interface} proto ${proto}${_from} to any port ${port}"
+  $_destip = $destip ? {
+    ''      => 'any',
+    default => "$(destip)"
+  }
+
+  $_rule   = "allow in${_interface} proto ${proto}${_from} to ${_destip} port ${port}"
   $_exists = "ufw status | grep -qE '^${_port_match}\\/${proto}${_interface_match} +ALLOW +${_from_match}( +.*)?$'"
 
   if $ensure == 'present' {
